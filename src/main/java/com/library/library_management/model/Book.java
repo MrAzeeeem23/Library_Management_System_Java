@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Entity
-@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"title", "author"}))  // Unique constraint
+@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"title", "author"}))
 public class Book implements BookSubject {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,22 +31,17 @@ public class Book implements BookSubject {
     private List<BookObserver> observers = new ArrayList<>();
 
     @Transient
-    private final ReentrantLock lock = new ReentrantLock();  // Lock for thread safety
+    private final ReentrantLock lock = new ReentrantLock();
 
-    public Book() {
-    }
+    // Default constructor for JPA
+    public Book() {}
 
-    // Constructors
-    public Book(int id, String title, String author, int availableCopies) {
-        this.id = id;
+    // Parameterized constructor
+    public Book(String title, String author, int availableCopies) {
         this.title = title;
         this.author = author;
         this.availableCopies = availableCopies;
     }
-
-    public Book(String title, String author, int i) {
-    }
-
 
     // Getters and setters
     public int getId() { return id; }
@@ -58,9 +53,8 @@ public class Book implements BookSubject {
     public int getAvailableCopies() { return availableCopies; }
     public void setAvailableCopies(int availableCopies) { this.availableCopies = availableCopies; }
 
-    // Synchronized borrow method
     public boolean borrowBook() {
-        lock.lock();  // Acquire the lock
+        lock.lock();
         try {
             if (availableCopies > 0) {
                 availableCopies--;
@@ -70,11 +64,10 @@ public class Book implements BookSubject {
             System.out.println(Thread.currentThread().getName() + " failed to borrow " + title + ". No copies left.");
             return false;
         } finally {
-            lock.unlock();  // Release the lock
+            lock.unlock();
         }
     }
 
-    // Synchronized return method
     public void returnBook() {
         lock.lock();
         try {
@@ -86,34 +79,14 @@ public class Book implements BookSubject {
         }
     }
 
-    // Observer methods
     @Override
-    public void registerObserver(BookObserver observer) {
-        observers.add(observer);
-    }
-
+    public void registerObserver(BookObserver observer) { observers.add(observer); }
     @Override
-    public void removeObserver(BookObserver observer) {
-        observers.remove(observer);
-    }
-
+    public void removeObserver(BookObserver observer) { observers.remove(observer); }
     @Override
     public void notifyObservers(Book book) {
         for (BookObserver observer : observers) {
             observer.update(book);
         }
     }
-
-    public List<BookObserver> getObservers() {
-        return observers;
-    }
-
-    public void setObservers(List<BookObserver> observers) {
-        this.observers = observers;
-    }
-
-    public ReentrantLock getLock() {
-        return lock;
-    }
 }
-

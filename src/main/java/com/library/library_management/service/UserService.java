@@ -21,8 +21,17 @@ public class UserService {
         return userRepository.findById(id);
     }
 
-    public User saveUser(User user) {
+    public User saveUser(User user) throws IllegalArgumentException {
+        // Check for duplicate email
+        Optional<User> existingUser = userRepository.findByEmail(user.getEmail());
+        if (existingUser.isPresent()) {
+            throw new IllegalArgumentException("User with email " + user.getEmail() + " already exists");
+        }
         return userRepository.save(user);
+    }
+
+    public User updateUser(User user) {
+        return userRepository.save(user);  // Separate method for updates
     }
 
     public void deleteUser(int id) {

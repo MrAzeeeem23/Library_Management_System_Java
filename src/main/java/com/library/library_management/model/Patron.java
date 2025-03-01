@@ -12,9 +12,6 @@ public class Patron extends User implements BookObserver {
         super(name, email);
     }
 
-    public Patron(int id, String name, String email) {
-    }
-
     @Override
     public int getLoanPeriod() {
         return 14;

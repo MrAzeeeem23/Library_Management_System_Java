@@ -3,9 +3,9 @@ package com.library.library_management.model;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "users")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "user_type")
+@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"email"}))  // Add this
 public abstract class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -13,7 +13,6 @@ public abstract class User {
     private String name;
     private String email;
 
-    // Constructors, getters, setters
     public User() {}
     public User(String name, String email) {
         this.name = name;

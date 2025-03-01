@@ -1,5 +1,6 @@
 package com.library.library_management.service;
 
+import com.library.library_management.exception.ResourceNotFoundException;
 import com.library.library_management.model.Book;
 import com.library.library_management.model.Loan;
 import com.library.library_management.model.User;
@@ -29,24 +30,23 @@ public class LoanService {
         return loanRepository.findById(id);
     }
 
-    // Synchronized borrowing logic
     public synchronized Loan createLoan(int bookId, int userId) {
         Book book = bookRepository.findById(bookId)
-                .orElseThrow(() -> new RuntimeException("Book not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Book not found with id: " + bookId));
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
-        if (book.borrowBook()) {  // Thread-safe borrowing
+        if (book.borrowBook()) {
             Loan loan = new Loan(book, user);
             return loanRepository.save(loan);
         }
-        throw new RuntimeException("Book not available");
+        throw new IllegalStateException("Book is not available for borrowing");
     }
 
     public void deleteLoan(int id) {
         Loan loan = loanRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Loan not found"));
-        loan.getBook().returnBook();  // Thread-safe returning
+                .orElseThrow(() -> new ResourceNotFoundException("Loan not found with id: " + id));
+        loan.getBook().returnBook();
         loanRepository.deleteById(id);
     }
 }

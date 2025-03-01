@@ -3,15 +3,16 @@ package com.library.library_management.scraper;
 import com.library.library_management.model.Book;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ScraperTask implements Runnable {
-    private final String url;                          // Real URL to scrape
-    private final ConcurrentHashMap<Integer, Book> bookStore;  // Thread-safe storage
+    private final String url;
+    private final ConcurrentHashMap<String, Book> bookStore;
 
-    public ScraperTask(String url, ConcurrentHashMap<Integer, Book> bookStore) {
+    public ScraperTask(String url, ConcurrentHashMap<String, Book> bookStore) {
         this.url = url;
         this.bookStore = bookStore;
     }
@@ -22,29 +23,49 @@ public class ScraperTask implements Runnable {
             System.out.println("Scraping URL: " + url + " on thread " + Thread.currentThread().getName());
             Book scrapedBook = scrapeBookData(url);
 
-            // Store the book in the shared ConcurrentHashMap
             if (scrapedBook != null) {
-                bookStore.put(scrapedBook.getId(), scrapedBook);
-                System.out.println("Added book: " + scrapedBook.getTitle() + " from " + url);
+                System.out.println("Book created - Title: " + scrapedBook.getTitle() + ", Author: " + scrapedBook.getAuthor());
+                bookStore.put(url, scrapedBook);
+                System.out.println("Successfully added book: " + scrapedBook.getTitle() + " by " + scrapedBook.getAuthor() + " from " + url);
+            } else {
+                System.out.println("Skipping URL " + url + ": No valid book data found (title or author missing)");
             }
         } catch (Exception e) {
             System.err.println("Error scraping " + url + ": " + e.getMessage());
         }
     }
 
-    // Real scraping logic using Jsoup
     private Book scrapeBookData(String url) throws IOException {
-        // Connect to the URL and fetch the document
-        Document doc = Jsoup.connect(url).get();
+        Document doc = Jsoup.connect(url).userAgent("Mozilla/5.0").timeout(10000).get();
 
-        // Extract book details (example assumes a simple HTML structure)
-        String title = doc.select("h1").first().text();  // Title from <h1> tag
-        String author = doc.select("tr:has(th:contains(Author)) td a").first().text();  // Author from <p class="author">
+        // Extract title
+        String title = null;
+        Element titleElement = doc.select("h1").first();
+        if (titleElement != null && !titleElement.text().trim().isEmpty()) {
+            title = titleElement.text().trim();
+        } else {
+            Element tableTitle = doc.select("tr:has(th:contains(Title)) td").first();
+            if (tableTitle != null && !tableTitle.text().trim().isEmpty()) {
+                title = tableTitle.text().trim();
+            }
+        }
+        if (title == null || title.isEmpty()) {
+            System.out.println("No valid title found at " + url);
+            return null;
+        }
 
-        // Generate a simple ID from the URL (in practice, use a unique identifier from the site)
-        int id = Math.abs(url.hashCode());
+        // Extract author
+        String author = "Unknown Author";
+        Element authorElement = doc.select("tr:has(th:contains(Author)) td a").first();
+        if (authorElement != null && !authorElement.text().trim().isEmpty()) {
+            author = authorElement.text().trim();
+        }
 
-        // Return a new Book object (5 copies by default)
-        return new Book(id, title, author, 5);
+        // Debugging before creating Book
+        System.out.println("Scraped - Title: " + title + ", Author: " + author + " from " + url);
+
+        // Create Book object
+        Book book = new Book(title, author, 5);
+        return book;
     }
 }

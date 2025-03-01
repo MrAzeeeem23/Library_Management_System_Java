@@ -8,9 +8,9 @@ public class UserFactory {
     public static User createUser(String type, int id, String name, String email) {
         switch (type.toLowerCase()) {
             case "patron":
-                return new Patron(id, name, email);
+                return new Patron(name, email);  // Pass name and email directly
             case "staff":
-                return new Staff(id, name, email);
+                return new Staff(name, email);   // Pass name and email directly
             default:
                 throw new IllegalArgumentException("Unknown user type: " + type);
         }

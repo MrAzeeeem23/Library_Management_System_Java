@@ -16,30 +16,29 @@ public class ScraperService {
     @Autowired
     private BookRepository bookRepository;
 
-    public void scrapeAndSaveBooks() {
-        List<String> urls = Arrays.asList(
-                "https://www.gutenberg.org/ebooks/1342",  // Pride and Prejudice
-                "https://www.gutenberg.org/ebooks/84",
-                "https://www.gutenberg.org/ebooks/81",
-                "https://www.gutenberg.org/ebooks/61",
-                "https://www.gutenberg.org/ebooks/1324"
+    public void scrapeAndSaveBooks(List<String> urls) {
+        List<String> scrapeUrls = (urls != null && !urls.isEmpty())
+                ? urls
+                : Arrays.asList(
+                "https://www.gutenberg.org/ebooks/1342",
+                "https://www.gutenberg.org/ebooks/11"
         );
 
-        BookScraper scraper = new BookScraper(2);  // 2 threads
-        scraper.scrapeBooks(urls);
+        BookScraper scraper = new BookScraper(2, scrapeUrls);
+        scraper.scrapeBooks();
 
-        ConcurrentHashMap<Integer, Book> scrapedBooks = scraper.getBookStore();
+        ConcurrentHashMap<String, Book> scrapedBooks = scraper.getBookStore();
         for (Book scrapedBook : scrapedBooks.values()) {
-            // Check if book already exists by title and author
+            System.out.println("Attempting to save - Title: " + scrapedBook.getTitle() + ", Author: " + scrapedBook.getAuthor());
             Optional<Book> existingBook = bookRepository.findByTitleAndAuthor(
                     scrapedBook.getTitle(), scrapedBook.getAuthor()
             );
 
             if (existingBook.isPresent()) {
-                System.out.println("Skipping duplicate book: " + scrapedBook.getTitle());
+                System.out.println("Skipping duplicate book: " + scrapedBook.getTitle() + " by " + scrapedBook.getAuthor());
             } else {
                 bookRepository.save(scrapedBook);
-                System.out.println("Saved new book: " + scrapedBook.getTitle());
+                System.out.println("Saved new book: " + scrapedBook.getTitle() + " by " + scrapedBook.getAuthor());
             }
         }
     }

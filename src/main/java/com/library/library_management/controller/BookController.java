@@ -1,8 +1,8 @@
 package com.library.library_management.controller;
 
-import com.library.library_management.service.ScraperService;
 import com.library.library_management.model.Book;
 import com.library.library_management.service.BookService;
+import com.library.library_management.service.ScraperService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -15,23 +15,19 @@ import java.util.List;
 public class BookController {
     @Autowired
     private BookService bookService;
+    @Autowired
+    private ScraperService scraperService;
 
     @GetMapping
-    public List<Book> getAllBooks() {
-        return bookService.getAllBooks();
-    }
+    public List<Book> getAllBooks() { return bookService.getAllBooks(); }
 
     @GetMapping("/{id}")
     public ResponseEntity<Book> getBookById(@PathVariable int id) {
-        return bookService.getBookById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        return bookService.getBookById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public Book createBook(@Valid @RequestBody Book book) {
-        return bookService.saveBook(book);
-    }
+    public Book createBook(@Valid @RequestBody Book book) { return bookService.saveBook(book); }
 
     @PutMapping("/{id}")
     public ResponseEntity<Book> updateBook(@PathVariable int id, @Valid @RequestBody Book bookDetails) {
@@ -51,12 +47,13 @@ public class BookController {
         return ResponseEntity.noContent().build();
     }
 
-    @Autowired
-    private ScraperService scraperService;
-
     @PostMapping("/scrape")
-    public String scrapeBooks() {
-        scraperService.scrapeAndSaveBooks();
-        return "Books scraped and saved successfully!";
+    public ResponseEntity<String> scrapeBooks(@RequestBody(required = false) List<String> urls) {
+        try {
+            scraperService.scrapeAndSaveBooks(urls);  // This line caused the error
+            return ResponseEntity.ok("Books scraped and saved successfully!");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Scraping failed: " + e.getMessage());
+        }
     }
 }

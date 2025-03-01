@@ -11,9 +11,6 @@ public class Staff extends User {
         super(name, email);
     }
 
-    public Staff(int id, String name, String email) {
-    }
-
     @Override
     public int getLoanPeriod() {
         return 30;
