@@ -3,7 +3,6 @@ package com.library.library_management.scraper;
 import com.library.library_management.model.Book;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
 
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
@@ -35,37 +34,17 @@ public class ScraperTask implements Runnable {
 
     // Real scraping logic using Jsoup
     private Book scrapeBookData(String url) throws IOException {
-        System.out.println("Connecting to " + url);
         // Connect to the URL and fetch the document
         Document doc = Jsoup.connect(url).get();
-        System.out.println("Connected to " + url);
 
         // Extract book details (example assumes a simple HTML structure)
-        Element titleElement = doc.select("h1").first();  // Title from <h1> tag
-        if (titleElement != null) {
-            System.out.println("Found title element: " + titleElement.text());
-        } else {
-            System.err.println("Title element not found for URL: " + url);
-        }
-        Element authorElement = doc.select("table tbody tr:contains(Author) td a").first();  // Author from <p class="author">
-        if (authorElement != null) {
-            System.out.println("Found author element: " + authorElement.text());
-        } else {
-            System.err.println("Author element not found for URL: " + url);
-        }
+        String title = doc.select("h1").first().text();  // Title from <h1> tag
+        String author = doc.select("tr:has(th:contains(Author)) td a").first().text();  // Author from <p class="author">
 
-        if (titleElement != null && authorElement != null) {
-            String title = titleElement.text();
-            String author = authorElement.text();
+        // Generate a simple ID from the URL (in practice, use a unique identifier from the site)
+        int id = Math.abs(url.hashCode());
 
-            // Generate a simple ID from the URL (in practice, use a unique identifier from the site)
-            int id = Math.abs(url.hashCode());
-
-            // Return a new Book object (5 copies by default)
-            return new Book(id, title, author, 5);
-        } else {
-            System.err.println("Failed to find title or author element for URL: " + url);
-            return null;
-        }
+        // Return a new Book object (5 copies by default)
+        return new Book(id, title, author, 5);
     }
 }

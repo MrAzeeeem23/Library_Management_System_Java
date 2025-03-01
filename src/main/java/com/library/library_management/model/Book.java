@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Entity
+@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"title", "author"}))  // Unique constraint
 public class Book implements BookSubject {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -32,16 +33,20 @@ public class Book implements BookSubject {
     @Transient
     private final ReentrantLock lock = new ReentrantLock();  // Lock for thread safety
 
+    public Book() {
+    }
+
     // Constructors
-    public Book() {}
-    public Book(String title, String author, int availableCopies) {
+    public Book(int id, String title, String author, int availableCopies) {
+        this.id = id;
         this.title = title;
         this.author = author;
         this.availableCopies = availableCopies;
     }
 
-    public Book(int id, String title, String author, int i) {
+    public Book(String title, String author, int i) {
     }
+
 
     // Getters and setters
     public int getId() { return id; }
@@ -98,4 +103,17 @@ public class Book implements BookSubject {
             observer.update(book);
         }
     }
+
+    public List<BookObserver> getObservers() {
+        return observers;
+    }
+
+    public void setObservers(List<BookObserver> observers) {
+        this.observers = observers;
+    }
+
+    public ReentrantLock getLock() {
+        return lock;
+    }
 }
+

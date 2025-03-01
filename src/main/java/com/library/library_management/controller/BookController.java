@@ -1,5 +1,6 @@
 package com.library.library_management.controller;
 
+import com.library.library_management.service.ScraperService;
 import com.library.library_management.model.Book;
 import com.library.library_management.service.BookService;
 import jakarta.validation.Valid;
@@ -48,5 +49,14 @@ public class BookController {
     public ResponseEntity<Void> deleteBook(@PathVariable int id) {
         bookService.deleteBook(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @Autowired
+    private ScraperService scraperService;
+
+    @PostMapping("/scrape")
+    public String scrapeBooks() {
+        scraperService.scrapeAndSaveBooks();
+        return "Books scraped and saved successfully!";
     }
 }
