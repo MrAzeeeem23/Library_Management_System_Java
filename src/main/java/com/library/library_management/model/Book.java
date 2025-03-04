@@ -81,8 +81,7 @@ public class Book implements BookSubject {
 
     @Override
     public void registerObserver(BookObserver observer) { observers.add(observer); }
-    @Override
-    public void removeObserver(BookObserver observer) { observers.remove(observer); }
+
     @Override
     public void notifyObservers(Book book) {
         for (BookObserver observer : observers) {
