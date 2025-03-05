@@ -3,6 +3,7 @@ package com.library.library_management.service;
 import com.library.library_management.model.User;
 import com.library.library_management.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -12,6 +13,9 @@ import java.util.Optional;
 public class UserService {
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder; // inject BCryptPasswordEncoder
 
     public List<User> getAllUsers() {
         return userRepository.findAll();
@@ -27,11 +31,19 @@ public class UserService {
         if (existingUser.isPresent()) {
             throw new IllegalArgumentException("User with email " + user.getEmail() + " already exists");
         }
+        // Hash password before savie
+        if (user.getPassword() != null && !user.getPassword().isEmpty()) {
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
+        }
         return userRepository.save(user);
     }
 
     public User updateUser(User user) {
-        return userRepository.save(user);  // Separate method for updates
+        // hash the password if provided during update
+        if (user.getPassword() != null && !user.getPassword().isEmpty()) {
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
+        }
+        return userRepository.save(user);
     }
 
     public void deleteUser(int id) {

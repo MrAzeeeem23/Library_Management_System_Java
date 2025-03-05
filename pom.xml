@@ -57,6 +57,12 @@
 			<version>8.0.33</version>
 		</dependency>
 
+<!--	For admin authentication dependency-->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+
 	</dependencies>
 
 	<build>

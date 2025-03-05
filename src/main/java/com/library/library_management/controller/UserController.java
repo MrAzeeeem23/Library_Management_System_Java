@@ -32,13 +32,13 @@ public class UserController {
     public ResponseEntity<User> createUser(@RequestBody UserDTO userDTO) {
         try {
             System.out.println("Received DTO - Name: " + userDTO.getName() + ", Email: " + userDTO.getEmail() + ", Type: " + userDTO.getUserType());
-            User user = UserFactory.createUser(userDTO.getUserType(), 0, userDTO.getName(), userDTO.getEmail());
+            User user = UserFactory.createUser(userDTO.getUserType(), 0, userDTO.getName(), userDTO.getEmail(), userDTO.getPassword());
             System.out.println("Created User - Name: " + user.getName() + ", Email: " + user.getEmail());
-            User savedUser = userService.saveUser(user);  // Will throw if duplicate email
+            User savedUser = userService.saveUser(user);
             System.out.println("Saved User - Name: " + savedUser.getName() + ", Email: " + savedUser.getEmail());
             return ResponseEntity.ok(savedUser);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(null);  // Return 400 for duplicates
+            return ResponseEntity.badRequest().body(null);
         }
     }
 
@@ -50,7 +50,8 @@ public class UserController {
                         System.out.println("Updating User ID: " + id + " - New Name: " + userDTO.getName() + ", New Email: " + userDTO.getEmail());
                         user.setName(userDTO.getName());
                         user.setEmail(userDTO.getEmail());
-                        User updatedUser = userService.updateUser(user);  // Use updateUser method
+                        user.setPassword(userDTO.getPassword()); // Include password if provided
+                        User updatedUser = userService.updateUser(user);
                         System.out.println("Updated User - Name: " + updatedUser.getName() + ", Email: " + updatedUser.getEmail());
                         return ResponseEntity.ok(updatedUser);
                     })

@@ -38,7 +38,7 @@ public class ScraperTask implements Runnable {
     private Book scrapeBookData(String url) throws IOException {
         Document doc = Jsoup.connect(url).userAgent("Mozilla/5.0").timeout(10000).get();
 
-        // Extract title
+        // scrape title
         String title = null;
         Element titleElement = doc.select("h1").first();
         if (titleElement != null && !titleElement.text().trim().isEmpty()) {
@@ -54,18 +54,17 @@ public class ScraperTask implements Runnable {
             return null;
         }
 
-        // Extract author
+        // scrape author
         String author = "Unknown Author";
         Element authorElement = doc.select("tr:has(th:contains(Author)) td a").first();
         if (authorElement != null && !authorElement.text().trim().isEmpty()) {
             author = authorElement.text().trim();
         }
 
-        // Debugging before creating Book
         System.out.println("Scraped - Title: " + title + ", Author: " + author + " from " + url);
 
-        // Create Book object
-        Book book = new Book(title, author, 5);
+//      // book object
+        Book book = new Book(title, author, 7);
         return book;
     }
 }

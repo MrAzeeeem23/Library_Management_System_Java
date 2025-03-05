@@ -33,10 +33,10 @@ public class Book implements BookSubject {
     @Transient
     private final ReentrantLock lock = new ReentrantLock();
 
-    // Default constructor for JPA
+    // D_contructor for JPA
     public Book() {}
 
-    // Parameterized constructor
+    // constructor pa...
     public Book(String title, String author, int availableCopies) {
         this.title = title;
         this.author = author;

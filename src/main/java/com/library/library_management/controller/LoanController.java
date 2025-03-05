@@ -41,4 +41,15 @@ public class LoanController {
         loanService.deleteLoan(id);
         return ResponseEntity.noContent().build();
     }
+
+    // New endpoint to clear all loans
+    @DeleteMapping("/clear")
+    public ResponseEntity<String> clearAllLoans() {
+        try {
+            loanService.clearAllLoans();
+            return ResponseEntity.ok("All loans cleared successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Failed to clear loans: " + e.getMessage());
+        }
+    }
 }

@@ -8,8 +8,8 @@ import jakarta.persistence.Entity;
 @DiscriminatorValue("PATRON")
 public class Patron extends User implements BookObserver {
     public Patron() {}
-    public Patron(String name, String email) {
-        super(name, email);
+    public Patron(String name, String email, String password) {
+        super(name, email, password);
     }
 
     @Override
