@@ -2,45 +2,83 @@ package com.library.library_management.model;
 
 import com.library.library_management.patterns.BookObserver;
 import com.library.library_management.patterns.BookSubject;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Entity
-@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"title", "author"}))
 public class Book implements BookSubject {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
-
-    @NotNull
-    @Size(min = 1, max = 100)
     private String title;
-
-    @NotNull
-    @Size(min = 1, max = 100)
     private String author;
-
     private int availableCopies;
 
-    @Transient
-    private List<BookObserver> observers = new ArrayList<>();
+    @ManyToMany
+    @JoinTable(
+            name = "book_patron_observers",
+            joinColumns = @JoinColumn(name = "book_id"),
+            inverseJoinColumns = @JoinColumn(name = "patron_id")
+    )
+    @JsonManagedReference
+    private List<Patron> observers = new ArrayList<>();
 
     @Transient
     private final ReentrantLock lock = new ReentrantLock();
 
-    // D_contructor for JPA
     public Book() {}
-
-    // constructor pa...
     public Book(String title, String author, int availableCopies) {
         this.title = title;
         this.author = author;
         this.availableCopies = availableCopies;
+    }
+
+    public boolean borrowBook() {
+        lock.lock();
+        try {
+            if (availableCopies > 0) {
+                availableCopies--;
+                if (availableCopies == 0) {
+                    notifyObservers();
+                }
+                return true;
+            }
+            return false;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public void returnBook() {
+        lock.lock();
+        try {
+            availableCopies++;
+            notifyObservers();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    @Override
+    public void registerObserver(BookObserver observer) {
+        if (observer instanceof Patron && !observers.contains(observer)) {
+            observers.add((Patron) observer);
+        }
+    }
+
+    @Override
+    public void removeObserver(BookObserver observer) {
+        observers.remove(observer);
+    }
+
+    @Override
+    public void notifyObservers() {
+        for (BookObserver observer : observers) {
+            observer.update(this); // Pass current Book instance
+        }
     }
 
     // Getters and setters
@@ -52,40 +90,5 @@ public class Book implements BookSubject {
     public void setAuthor(String author) { this.author = author; }
     public int getAvailableCopies() { return availableCopies; }
     public void setAvailableCopies(int availableCopies) { this.availableCopies = availableCopies; }
-
-    public boolean borrowBook() {
-        lock.lock();
-        try {
-            if (availableCopies > 0) {
-                availableCopies--;
-                System.out.println(Thread.currentThread().getName() + " borrowed " + title + ". Copies left: " + availableCopies);
-                return true;
-            }
-            System.out.println(Thread.currentThread().getName() + " failed to borrow " + title + ". No copies left.");
-            return false;
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    public void returnBook() {
-        lock.lock();
-        try {
-            availableCopies++;
-            System.out.println(Thread.currentThread().getName() + " returned " + title + ". Copies left: " + availableCopies);
-            notifyObservers(this);
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    @Override
-    public void registerObserver(BookObserver observer) { observers.add(observer); }
-
-    @Override
-    public void notifyObservers(Book book) {
-        for (BookObserver observer : observers) {
-            observer.update(book);
-        }
-    }
+    public List<Patron> getObservers() { return observers; }
 }

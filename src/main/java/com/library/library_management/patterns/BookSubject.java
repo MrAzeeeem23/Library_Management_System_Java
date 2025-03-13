@@ -1,9 +1,8 @@
 package com.library.library_management.patterns;
 
-import com.library.library_management.model.Book;
-
+// updated
 public interface BookSubject {
     void registerObserver(BookObserver observer);
-
-    void notifyObservers(Book book);
+    void removeObserver(BookObserver observer);
+    void notifyObservers(); // No Book parameter
 }

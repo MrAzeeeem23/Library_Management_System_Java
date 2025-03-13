@@ -3,6 +3,7 @@ package com.library.library_management.service;
 import com.library.library_management.exception.ResourceNotFoundException;
 import com.library.library_management.model.Book;
 import com.library.library_management.model.Loan;
+import com.library.library_management.model.Patron;
 import com.library.library_management.model.User;
 import com.library.library_management.repository.BookRepository;
 import com.library.library_management.repository.LoanRepository;
@@ -23,28 +24,50 @@ public class LoanService {
     @Autowired
     private UserRepository userRepository;
 
-    public List<Loan> getAllLoans() {
-        return loanRepository.findAll();
-    }
-
-    public Optional<Loan> getLoanById(int id) {
-        return loanRepository.findById(id);
-    }
+//    @Transactional
+//    public synchronized Loan createLoan(int bookId, int userId) {
+//        // Validate bookId
+//        Book book = bookRepository.findById(bookId)
+//                .orElseThrow(() -> new ResourceNotFoundException("Book not found with id: " + bookId));
+//
+//        // Validate userId
+//        User user = userRepository.findById(userId)
+//                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+//
+//        // Proceed with loan creation
+//        if (book.borrowBook()) {
+//            Loan loan = new Loan(book, user);
+//            return loanRepository.save(loan);
+//        }
+//        throw new IllegalStateException("Book is not available for borrowing");
+//    }
 
     @Transactional
     public synchronized Loan createLoan(int bookId, int userId) {
-        // Validate bookId
-        Book book = bookRepository.findById(bookId)
-                .orElseThrow(() -> new ResourceNotFoundException("Book not found with id: " + bookId));
+        Optional<Book> bookOpt = bookRepository.findById(bookId);
+        if (!bookOpt.isPresent()) throw new ResourceNotFoundException("Book not found with id: " + bookId);
+        Book book = bookOpt.get();
 
-        // Validate userId
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (!userOpt.isPresent()) throw new ResourceNotFoundException("User not found with id: " + userId);
+        User user = userOpt.get();
 
-        // Proceed with loan creation
+        if (user instanceof Patron) {
+            book.registerObserver((Patron) user);
+            bookRepository.save(book); // Persist observer relationship
+        }
+
+        if (book.getAvailableCopies() == 0) {
+            // Book already unavailable, notify but don’t create a new loan
+            book.notifyObservers();
+            throw new IllegalStateException("Book is already unavailable; observers notified.");
+        }
+
         if (book.borrowBook()) {
             Loan loan = new Loan(book, user);
-            return loanRepository.save(loan);
+            Loan savedLoan = loanRepository.save(loan);
+            bookRepository.save(book); // Update availableCopies
+            return savedLoan;
         }
         throw new IllegalStateException("Book is not available for borrowing");
     }
@@ -63,4 +86,14 @@ public class LoanService {
             loanRepository.delete(loan);
         }
     }
+
+//    new Methods
+    public List<Loan> getAllLoans() {
+        return loanRepository.findAll();
+    }
+
+    public Optional<Loan> getLoanById(int id) {
+        return loanRepository.findById(id);
+    }
+
 }

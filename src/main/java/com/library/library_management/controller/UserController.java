@@ -7,6 +7,7 @@ import com.library.library_management.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.Authentication;
 
 import java.util.List;
 
@@ -33,9 +34,7 @@ public class UserController {
         try {
             System.out.println("Received DTO - Name: " + userDTO.getName() + ", Email: " + userDTO.getEmail() + ", Type: " + userDTO.getUserType());
             User user = UserFactory.createUser(userDTO.getUserType(), 0, userDTO.getName(), userDTO.getEmail(), userDTO.getPassword());
-            System.out.println("Created User - Name: " + user.getName() + ", Email: " + user.getEmail());
             User savedUser = userService.saveUser(user);
-            System.out.println("Saved User - Name: " + savedUser.getName() + ", Email: " + savedUser.getEmail());
             return ResponseEntity.ok(savedUser);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(null);
@@ -47,12 +46,10 @@ public class UserController {
         try {
             return userService.getUserById(id)
                     .map(user -> {
-                        System.out.println("Updating User ID: " + id + " - New Name: " + userDTO.getName() + ", New Email: " + userDTO.getEmail());
                         user.setName(userDTO.getName());
                         user.setEmail(userDTO.getEmail());
-                        user.setPassword(userDTO.getPassword()); // Include password if provided
+                        user.setPassword(userDTO.getPassword());
                         User updatedUser = userService.updateUser(user);
-                        System.out.println("Updated User - Name: " + updatedUser.getName() + ", Email: " + updatedUser.getEmail());
                         return ResponseEntity.ok(updatedUser);
                     })
                     .orElse(ResponseEntity.notFound().build());
@@ -65,5 +62,26 @@ public class UserController {
     public ResponseEntity<Void> deleteUser(@PathVariable int id) {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
+    }
+
+    // new route /me for login
+    @PutMapping("/me")
+    public ResponseEntity<User> updateOwnUser(@RequestBody UserDTO userDTO, Authentication authentication) {
+        String email = authentication.getName();
+        return userService.getUserByEmail(email)
+                .map(user -> {
+                    if (userDTO.getName() != null && !userDTO.getName().isEmpty()) {
+                        user.setName(userDTO.getName());
+                    }
+                    if (userDTO.getEmail() != null && !userDTO.getEmail().isEmpty()) {
+                        user.setEmail(userDTO.getEmail());
+                    }
+                    if (userDTO.getPassword() != null && !userDTO.getPassword().isEmpty()) {
+                        user.setPassword(userDTO.getPassword());
+                    }
+                    User updatedUser = userService.updateUser(user);
+                    return ResponseEntity.ok(updatedUser);
+                })
+                .orElse(ResponseEntity.notFound().build());
     }
 }
